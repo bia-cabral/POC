@@ -1,1 +1,33 @@
+name: Java CI with Maven
 
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Carregando o java 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    - name: Compilar o maven
+      run: mvn -B package -DskipTests --file pom.xml
+
+    - name: Deploy Ec2
+      run: |
+        echo "${{secrets.TU}}" >spring-ge-tu && chmod 400 spring-ge-tu
+        ssh -o StrictHostKeyChecking=no -i spring-ge-tu ubuntu@ec2-44-207-117-71.compute-1.amazonaws.com "
+              cd /home/ubuntu/BdEstoque && 
+              git pull &&
+              mvn clean package -DskipTests &&
+              cd .. && 
+              ./executar.sh "
